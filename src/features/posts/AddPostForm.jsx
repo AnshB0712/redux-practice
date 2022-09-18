@@ -1,6 +1,7 @@
 import {useState} from 'react'
 import {useDispatch,useSelector} from 'react-redux'
 
+import { asyncAddPost } from './postsSlice'
 import { selectAllUsers } from '../users/usersSlice'
 import { addPost } from './postsSlice'
 
@@ -9,6 +10,7 @@ export const AddPostForm = () => {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [userId, setUserId] = useState('')
+  const [addRequestStatus, setAddRequestStatus] = useState('idle')
   
   const dispatch = useDispatch()
   const users = useSelector(selectAllUsers)
@@ -17,17 +19,29 @@ export const AddPostForm = () => {
   const onContentChanged = e => setContent(e.target.value)
   const onAuthorChanged = e => setUserId(e.target.value)
   
-  const onSaveChanged = (e) => {
+  const canSave = Boolean(title) && Boolean(content) && addRequestStatus === 'idle'
+  
+  const onSaveChanged = async (e) => {
     e.preventDefault()
     
-    if(!title && !content)
-    return
-    
-    dispatch(addPost(title,content,userId))
+    try {
+      setAddRequestStatus('pending')
+      
+      await dispatch(asyncAddPost({
+      title,
+      body:content,
+      userId
+    })).unwrap()
+    } catch (e) {
+      console.error(e.message)
+    }
+    finally{
+      setAddRequestStatus('idle')
+    }
     
     setTitle('')
     setContent('')
-    
+    setUserId('')
   }
   
   const usersOptions = users.map(user => {
@@ -39,8 +53,6 @@ export const AddPostForm = () => {
     </option>
       )
   })
-  
-  const canSave = Boolean(title) && Boolean(content) && Boolean(userId)
   
   return ( 
     <section>
@@ -86,7 +98,13 @@ export const AddPostForm = () => {
       onClick={onSaveChanged}
       disabled={!canSave}
       >
-        Save Post
+      {  
+      addRequestStatus==='pending' 
+      ? 
+      'Loading ...' 
+      : 
+      'Save Post' 
+      }
       </button>
       </form>
       

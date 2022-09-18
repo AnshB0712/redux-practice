@@ -1,40 +1,52 @@
-import { useSelector } from 'react-redux'
-import { selectAllPosts } from './postsSlice'
+import { useEffect } from 'react'
+import { useSelector,useDispatch } from 'react-redux'
+import { nanoid } from '@reduxjs/toolkit'
 
-import { PostAuthor } from './PostAuthor'
-import { PostDate } from './PostDate'
-import { ReactionButtons } from './ReactionButtons'
+import { selectAllPosts } from './postsSlice'
+import { postsStatus } from './postsSlice'
+import { postsError } from './postsSlice'
+import { fetchPosts } from './postsSlice'
+
+import { PostBody } from './PostBody'
 
 export const PostsList = () => {
   
-  const posts = useSelector(selectAllPosts)
+  const dispatch = useDispatch()
   
+  const posts = useSelector(selectAllPosts)
+  const error = useSelector(postsError)
+  const status = useSelector(postsStatus)
+  
+  useEffect(() => {
+    if(status==='idle')
+    dispatch(fetchPosts())
+  },[status,dispatch])
+  
+  let content;
+  
+  if(status==='loading')
+  content = <p>Loading...</p>
+  if(status==='rejected')
+  content = <p>{error}</p>
+  
+  if(status==='success'){
+    
   const latestPostFirst = posts.slice().sort((a, b) => b.date.localeCompare(a.date))
 
-  const renderPosts = latestPostFirst.map((post) => {
+  content = latestPostFirst.map(post => {
     return (
-      <article key={post.id}>
-      
-      <h3>{post.title}</h3>
-      <p>{post.content}</p>
-      
-      <p className="postCredit">
-      <PostAuthor 
-      userId={post.userId} />
-      <PostDate 
-      timestamp={post.date}/>
-      </p>
-      
-      <ReactionButtons post={post} />
-      
-      </article>
-      )
-  })
+      <PostBody 
+      key={post.id} 
+      post={post}
+      />
+      )}
+    )
+  }
   
   return (
     <section>
     <h3>Posts</h3>
-    {renderPosts}
+    {content}
     </section>
     )
 }
