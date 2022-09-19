@@ -7,7 +7,7 @@ import { postsStatus } from './postsSlice'
 import { postsError } from './postsSlice'
 import { fetchPosts } from './postsSlice'
 
-import { PostBody } from './PostBody'
+import PostBody from './PostBody'
 
 export const PostsList = () => {
   
@@ -45,7 +45,6 @@ export const PostsList = () => {
   
   return (
     <section>
-    <h3>Posts</h3>
     {content}
     </section>
     )
