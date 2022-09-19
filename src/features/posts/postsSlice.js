@@ -4,6 +4,7 @@ import {
   createAsyncThunk
 } from '@reduxjs/toolkit'
 import axios from 'axios'
+import {sleep} from '../../utils/sleep'
 
 const POST_URI = "https://jsonplaceholder.typicode.com/posts"
 
@@ -26,6 +27,16 @@ export const asyncAddPost = createAsyncThunk(
   async (data) => {
   const response = await axios.post(POST_URI,data)
   return response.data
+})
+
+export const asyncEditPost = createAsyncThunk('posts/editPost',async(data) => {
+  await sleep(1000)
+  return data
+})
+
+export const asyncDeletePost = createAsyncThunk('posts/deletePost',async(id) => {
+  await sleep(1000)
+  return id
 })
 
 export const postsSlice = createSlice
@@ -94,7 +105,7 @@ export const postsSlice = createSlice
     })
     
     .addCase(asyncAddPost.fulfilled,(state,action) => {
-      
+      action.payload.id = nanoid()
       action.payload.userId = Number(action.payload.userId)
       action.payload.date = new Date().toISOString()
       action.payload.reactions={
@@ -107,12 +118,33 @@ export const postsSlice = createSlice
       
       state.posts.push(action.payload)
     })
+    
+    .addCase(asyncEditPost.fulfilled,(state,action) => {
+      action.payload.date = new Date().toISOString()
+      action.payload.reactions={
+        thumbsUp: 0,
+        wow: 0,
+        heart: 0,
+        rocket: 0,
+        coffee: 0,
+      }
+      const otherPosts = state.posts.filter(post => post.id !== action.payload.id)
+      state.posts = [...otherPosts,action.payload]
+    })
+    
+    .addCase(asyncDeletePost.fulfilled,(state,action) => {
+      const otherPosts = state.posts.filter(post => post.id !== action.payload.id)
+      state.posts = otherPosts
+    })
   }
 })
 
 export const selectAllPosts = (state) => state.posts.posts
+export const selectPostById = (state,postId) => state.posts.posts.find(post => post.id === postId)
+
 export const postsStatus = (state) => state.posts.status
 export const postsError = (state) => state.posts.error
+
 
 export const { addPost,addReactionOnPost } = postsSlice.actions
 

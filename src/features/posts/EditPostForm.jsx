@@ -1,27 +1,28 @@
 import {useState} from 'react'
 import {useDispatch,useSelector} from 'react-redux'
+import {useParams,useNavigate} from 'react-router-dom'
 
-import { asyncAddPost } from './postsSlice'
-import { selectAllUsers } from '../users/usersSlice'
-import { addPost } from './postsSlice'
+import { asyncEditPost } from './postsSlice'
+import { asyncDeletePost } from './postsSlice'
+import { selectPostById } from './postsSlice'
 
-import { useNavigate } from 'react-router-dom'
-
-export const AddPostForm = () => {
+export const EditPostForm = () => {
   
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const [userId, setUserId] = useState('')
-  const [addRequestStatus, setAddRequestStatus] = useState('idle')
+  const { postId } = useParams()
+  
+  const post = useSelector((state) => selectPostById(state,postId))
+  
+  const [title, setTitle] = useState(post?.title)
+  const [content, setContent] = useState(post?.body)
   
   const navigate = useNavigate()
   
+  const [addRequestStatus, setAddRequestStatus] = useState('idle')
+  
   const dispatch = useDispatch()
-  const users = useSelector(selectAllUsers)
   
   const onTitleChanged = e => setTitle(e.target.value)
   const onContentChanged = e => setContent(e.target.value)
-  const onAuthorChanged = e => setUserId(e.target.value)
   
   const canSave = Boolean(title) && Boolean(content) && addRequestStatus === 'idle'
   
@@ -31,13 +32,15 @@ export const AddPostForm = () => {
     try {
       setAddRequestStatus('pending')
       
-      await dispatch(asyncAddPost({
+      await dispatch(asyncEditPost({
       title,
       body:content,
-      userId
+      userId: post.userId,
+      id: post.id,
     })).unwrap()
     
-    navigate('/')
+    navigate(`/post/${post.id}`)
+    
     } catch (e) {
       console.error(e.message)
     }
@@ -47,18 +50,19 @@ export const AddPostForm = () => {
     
     setTitle('')
     setContent('')
-    setUserId('')
   }
   
-  const usersOptions = users.map(user => {
-    return(
-    <option 
-    key={user.id} 
-    value={user.id}>
-    {user.name}
-    </option>
-      )
-  })
+  const onDelete = async (e) => {
+    e.preventDefault()
+    
+    try {
+      await dispatch(asyncDeletePost
+      ({id: post.id})).unwrap()
+      navigate(`/`)
+    } catch (e) {
+      console.error(e.message)
+    }
+  }
   
   return ( 
     <section>
@@ -75,20 +79,6 @@ export const AddPostForm = () => {
         value={title}
         onChange={onTitleChanged}
       />
-      
-      <label 
-      htmlFor="postAuthor">
-      Author:
-      </label>
-      <select 
-      id="postAuthor" 
-      value={userId} 
-      onChange={onAuthorChanged}
-      >
-      <option value=""></option>
-      {usersOptions}
-      </select>
-      
       <label 
       htmlFor="postContent">
       Content:
@@ -109,9 +99,17 @@ export const AddPostForm = () => {
       ? 
       'Loading ...' 
       : 
-      'Save Post' 
+      'Edit Post' 
       }
       </button>
+      
+      <button 
+      className='deleteButton'
+      onClick={onDelete}
+      >
+      Delete Post
+      </button>
+      
       </form>
       
       </section>

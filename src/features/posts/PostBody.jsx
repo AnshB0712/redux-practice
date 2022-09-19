@@ -2,14 +2,22 @@ import { PostAuthor } from './PostAuthor'
 import { PostDate } from './PostDate'
 import { ReactionButtons } from './ReactionButtons'
 
-export const PostBody = ({post}) => {
+import { Link } from 'react-router-dom';
+
+import React from 'react'
+
+let PostBody = ({post}) => {
   return (
   <article>
       
   <h3>{post.title}</h3>
-  <p>{post.body}</p>
+  <p>{`${post.body.substring(0,50)}...`}</p>
       
   <p className="postCredit">
+    <Link 
+    to={`post/${post.id}`}>
+    View Post
+    </Link>
     <PostAuthor 
       userId={post.userId} />
     <PostDate 
@@ -21,3 +29,7 @@ export const PostBody = ({post}) => {
   </article>
   )
 }
+
+PostBody = React.memo(PostBody)
+
+export default PostBody
